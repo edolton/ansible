@@ -1,0 +1,36 @@
+- hosts: fortios_nc
+  connection: httpapi
+  collections:
+    - fortinet.fortios
+  vars_prompt:
+    - name: "ISE_Username"
+      prompt: "What is your ISE username?"
+      private: no
+    - name: "ISE_Password"
+      prompt: "What is your ISE password?"
+      confirm: yes
+
+  vars:
+    vdom: "Global"
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+    ansible_httpapi_port: 443
+
+  tasks:
+
+    - name: Importing Secret Variables
+      include_vars: secrets.yml
+
+    - name: gather basic system status facts
+      register: FOSShowFacts
+      fortios_facts:
+        username: "{{ ISE_Username }}"
+        password: "{{ ISE_Password }}"
+        vdom:  "{{ vdom }}"
+        gather_subset:
+          - fact: 'system_status_select'
+
+    - name: FOS Storing facts
+      copy:
+        content: "{{ FOSShowFacts.stdout[0] }}"
+        dest: "/etc/ansible/results/version/{{ inventory_hostname }}-fosfacts.txt"
